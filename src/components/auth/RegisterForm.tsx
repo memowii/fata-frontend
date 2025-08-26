@@ -180,7 +180,7 @@ export const RegisterForm = memo<RegisterFormProps>(
                 autoComplete="new-password"
                 required
                 disabled={isLoading}
-                helperText="Min 8 chars, 1 uppercase, 1 lowercase, 1 number, 1 special char (@$!%*?&)"
+                helperText="Min 8 chars, 1 uppercase, 1 lowercase, 1 number, 1 special char (only @$!%*?& allowed)"
                 leftAddon={
                   <svg
                     className="h-5 w-5"

@@ -17,6 +17,8 @@ const PASSWORD_REGEX = {
   NUMBER: /\d/,
   /** At least one special character - matches backend regex */
   SPECIAL: /[@$!%*?&]/,
+  /** Only allowed characters - matches backend validation */
+  ALLOWED_CHARS: /^[A-Za-z\d@$!%*?&]+$/,
 };
 
 /**
@@ -26,6 +28,10 @@ const passwordSchema = z
   .string()
   .min(8, 'Password must be at least 8 characters long')
   .max(100, 'Password must not exceed 100 characters')
+  .refine(
+    (password) => PASSWORD_REGEX.ALLOWED_CHARS.test(password),
+    'Password can only contain letters, numbers, and special characters (@$!%*?&)'
+  )
   .refine(
     (password) => PASSWORD_REGEX.UPPERCASE.test(password),
     'Password must contain at least one uppercase letter'
@@ -272,6 +278,13 @@ export function checkPasswordStrength(password: string): {
 } {
   const feedback: string[] = [];
   let score = 0;
+  
+  // Check for invalid characters first
+  if (!PASSWORD_REGEX.ALLOWED_CHARS.test(password)) {
+    feedback.push('Contains invalid characters. Only use letters, numbers, and @$!%*?&');
+    // Return early with weak strength if invalid characters are present
+    return { strength: PasswordStrength.WEAK, score: 0, feedback };
+  }
   
   // Length check
   if (password.length >= 8) score++;

@@ -50,7 +50,6 @@ export const LoginForm = memo<LoginFormProps>(
     error: externalError,
     isLoading: externalLoading = false,
   }) => {
-    const [rememberMe, setRememberMe] = useState(false);
     const [submitError, setSubmitError] = useState<string | null>(null);
     
     const {
@@ -70,17 +69,10 @@ export const LoginForm = memo<LoginFormProps>(
       async (data: LoginFormData) => {
         setSubmitError(null);
         
-        // Store remember me preference
-        if (rememberMe) {
-          localStorage.setItem('rememberMe', 'true');
-        } else {
-          localStorage.removeItem('rememberMe');
-        }
-        
         await onSubmit(data);
         // Errors are now handled by the auth context through the error prop
       },
-      [onSubmit, rememberMe]
+      [onSubmit]
     );
 
     const handleDismissError = useCallback(() => {
@@ -161,29 +153,16 @@ export const LoginForm = memo<LoginFormProps>(
               }
             />
 
-            <div className="flex items-center justify-between">
-              <label className="flex items-center group cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={rememberMe}
-                  onChange={(e) => setRememberMe(e.target.checked)}
-                  disabled={isLoading}
-                  className="h-4 w-4 rounded border-border bg-background text-primary focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:ring-offset-background disabled:opacity-50 transition-all duration-200"
-                />
-                <span className="ml-2 text-sm text-muted-foreground group-hover:text-foreground transition-colors">
-                  Remember me
-                </span>
-              </label>
-
-              {showForgotPasswordLink && (
+            {showForgotPasswordLink && (
+              <div className="text-right">
                 <Link
                   href={'/forgot-password'}
                   className="text-sm font-medium text-primary hover:text-primary/80 transition-colors duration-200 hover:underline underline-offset-4"
                 >
                   Forgot password?
                 </Link>
-              )}
-            </div>
+              </div>
+            )}
           </CardBody>
 
           <CardFooter className="space-y-4">

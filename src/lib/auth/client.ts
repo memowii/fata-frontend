@@ -87,7 +87,7 @@ export async function logout(): Promise<void> {
  * Request password reset
  */
 export async function forgotPassword(data: ForgotPasswordDto): Promise<MessageResponse> {
-  const response = await fetch(`${API_URL}/auth/forgot-password`, {
+  const response = await fetch('/api/auth/forgot-password', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -107,7 +107,7 @@ export async function forgotPassword(data: ForgotPasswordDto): Promise<MessageRe
  * Reset password with token
  */
 export async function resetPassword(data: ResetPasswordDto): Promise<MessageResponse> {
-  const response = await fetch(`${API_URL}/auth/reset-password`, {
+  const response = await fetch('/api/auth/reset-password', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -127,7 +127,7 @@ export async function resetPassword(data: ResetPasswordDto): Promise<MessageResp
  * Verify email with token
  */
 export async function verifyEmail(data: VerifyEmailDto): Promise<MessageResponse> {
-  const response = await fetch(`${API_URL}/auth/verify-email`, {
+  const response = await fetch('/api/auth/verify-email', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
