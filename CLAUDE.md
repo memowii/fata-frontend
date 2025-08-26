@@ -2,13 +2,22 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## General project context
+
+To gain a general context of what we're building and project's docs you can read these files:
+
+@documentation/from-article-to-audio-srs-v1.2.md <br>
+@documentation/api-docs-v1.json
+@TEST_DOCUMENTATION.md
+@TANSTACK_QUERY_SETUP.md
+
 ## Development Commands
 
 ### Package Manager
 This project uses **Yarn** as the package manager. Always use `yarn` instead of `npm`.
 
 ### Essential Commands
-- `yarn dev` - Start development server at http://localhost:3000
+- `yarn dev` - Start development server at http://localhost:4000
 - `yarn build` - Create production build
 - `yarn start` - Run production server
 - `yarn lint` - Run ESLint to check code quality
