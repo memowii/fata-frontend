@@ -79,6 +79,18 @@ export interface MessageResponse {
 }
 
 /**
+ * CSRF token response from the backend
+ */
+export interface CsrfTokenResponse {
+  /** CSRF token string */
+  csrfToken: string;
+  /** Token expiration timestamp (ISO string) */
+  expiresAt?: string;
+  /** Token expiration time in seconds */
+  expiresIn?: number;
+}
+
+/**
  * Paginated response for list endpoints
  * @template T - The type of items in the list
  */
@@ -137,6 +149,9 @@ export interface ApiEndpoint {
  * API endpoints enum for type-safe endpoint references
  */
 export enum ApiEndpoints {
+  // Security endpoints
+  CSRF_TOKEN = '/csrf-token',
+  
   // Auth endpoints
   LOGIN = '/auth/login',
   REGISTER = '/auth/register',
@@ -237,6 +252,12 @@ export enum ApiErrorCode {
   TOKEN_EXPIRED = 'TOKEN_EXPIRED',
   TOKEN_INVALID = 'TOKEN_INVALID',
   UNAUTHORIZED = 'UNAUTHORIZED',
+  
+  // CSRF protection errors
+  CSRF_TOKEN_MISSING = 'CSRF_TOKEN_MISSING',
+  CSRF_TOKEN_INVALID = 'CSRF_TOKEN_INVALID',
+  CSRF_TOKEN_EXPIRED = 'CSRF_TOKEN_EXPIRED',
+  CSRF_TOKEN_FETCH_ERROR = 'CSRF_TOKEN_FETCH_ERROR',
   
   // Validation errors
   VALIDATION_ERROR = 'VALIDATION_ERROR',

@@ -7,8 +7,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 To gain a general context of what we're building and project's docs you can read these files:
 
 @documentation/from-article-to-audio-srs-v1.2.md <br>
-@documentation/api-docs-v1.json
-@TEST_DOCUMENTATION.md
+@documentation/api-docs-v1.json <br>
+@TEST_DOCUMENTATION.md <br>
 @TANSTACK_QUERY_SETUP.md
 
 ## Development Commands

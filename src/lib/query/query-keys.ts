@@ -77,6 +77,14 @@ export const settingsKeys = {
 } as const;
 
 /**
+ * Security query keys (CSRF tokens, etc.)
+ */
+export const securityKeys = {
+  all: ['security'] as const,
+  csrfToken: () => [...securityKeys.all, 'csrf-token'] as const,
+} as const;
+
+/**
  * Combined query keys for easy import
  */
 export const queryKeys = {
@@ -86,6 +94,7 @@ export const queryKeys = {
   audio: audioKeys,
   notification: notificationKeys,
   settings: settingsKeys,
+  security: securityKeys,
 } as const;
 
 /**
@@ -131,7 +140,8 @@ export type QueryKey =
   | ReturnType<typeof articleKeys[keyof typeof articleKeys]>
   | ReturnType<typeof audioKeys[keyof typeof audioKeys]>
   | ReturnType<typeof notificationKeys[keyof typeof notificationKeys]>
-  | ReturnType<typeof settingsKeys[keyof typeof settingsKeys]>;
+  | ReturnType<typeof settingsKeys[keyof typeof settingsKeys]>
+  | ReturnType<typeof securityKeys[keyof typeof securityKeys]>;
 
 /**
  * Type for all mutation keys

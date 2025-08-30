@@ -1,15 +1,20 @@
-import { describe, it, expect, jest, beforeEach, afterEach } from '@jest/globals'
+import { describe, it, expect, jest, beforeEach } from '@jest/globals'
 import { api, tokenManager } from '../client'
 import { server } from '@/test/mocks/server'
 import { http, HttpResponse } from 'msw'
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api'
 
+// Mock fetch for CSRF token tests
+const mockFetch = jest.fn()
+global.fetch = mockFetch
+
 describe('API Client', () => {
   beforeEach(() => {
     // Clear any stored tokens
     localStorage.clear()
     sessionStorage.clear()
+    mockFetch.mockClear()
   })
 
   describe('tokenManager', () => {
@@ -517,6 +522,208 @@ describe('API Client', () => {
       } catch (error: any) {
         expect(error.message).toContain('JSON')
       }
+    })
+  })
+
+  describe('CSRF Token Management', () => {
+    beforeEach(() => {
+      tokenManager.clearCsrfToken()
+    })
+
+    describe('setCsrfToken', () => {
+      it('should store CSRF token in memory', () => {
+        const token = 'csrf-token-123'
+        const expiresAt = new Date(Date.now() + 30 * 60 * 1000).toISOString()
+
+        tokenManager.setCsrfToken(token, expiresAt)
+
+        expect(tokenManager.getCsrfToken()).toBe(token)
+        expect(tokenManager.isCsrfTokenExpired()).toBe(false)
+      })
+
+      it('should set default expiry when no expiry provided', () => {
+        const token = 'csrf-token-123'
+        tokenManager.setCsrfToken(token)
+
+        expect(tokenManager.getCsrfToken()).toBe(token)
+        expect(tokenManager.isCsrfTokenExpired()).toBe(false)
+      })
+
+      it('should handle string expiry dates', () => {
+        const token = 'csrf-token-123'
+        const expiresAt = new Date(Date.now() + 30 * 60 * 1000).toISOString()
+        
+        tokenManager.setCsrfToken(token, expiresAt)
+
+        expect(tokenManager.getCsrfToken()).toBe(token)
+        expect(tokenManager.isCsrfTokenExpired()).toBe(false)
+      })
+
+      it('should handle number expiry timestamps', () => {
+        const token = 'csrf-token-123'
+        const expiresAt = Date.now() + 30 * 60 * 1000
+        
+        tokenManager.setCsrfToken(token, expiresAt)
+
+        expect(tokenManager.getCsrfToken()).toBe(token)
+        expect(tokenManager.isCsrfTokenExpired()).toBe(false)
+      })
+    })
+
+    describe('clearCsrfToken', () => {
+      it('should clear CSRF token from memory', () => {
+        tokenManager.setCsrfToken('csrf-token-123')
+        expect(tokenManager.getCsrfToken()).toBe('csrf-token-123')
+
+        tokenManager.clearCsrfToken()
+
+        expect(tokenManager.getCsrfToken()).toBe(null)
+        expect(tokenManager.isCsrfTokenExpired()).toBe(true)
+      })
+    })
+
+    describe('isCsrfTokenExpired', () => {
+      it('should return true when no token exists', () => {
+        expect(tokenManager.isCsrfTokenExpired()).toBe(true)
+      })
+
+      it('should return true for expired tokens', () => {
+        const token = 'csrf-token-123'
+        const expiredTime = Date.now() - 10000 // 10 seconds ago
+        
+        tokenManager.setCsrfToken(token, expiredTime)
+
+        expect(tokenManager.isCsrfTokenExpired()).toBe(true)
+      })
+
+      it('should return false for valid tokens', () => {
+        const token = 'csrf-token-123'
+        const futureTime = Date.now() + 30 * 60 * 1000 // 30 minutes from now
+        
+        tokenManager.setCsrfToken(token, futureTime)
+
+        expect(tokenManager.isCsrfTokenExpired()).toBe(false)
+      })
+
+      it('should consider token expired if expires within 1 minute', () => {
+        const token = 'csrf-token-123'
+        const closeExpiryTime = Date.now() + 30000 // 30 seconds from now
+        
+        tokenManager.setCsrfToken(token, closeExpiryTime)
+
+        expect(tokenManager.isCsrfTokenExpired()).toBe(true)
+      })
+    })
+
+    describe('fetchCsrfToken', () => {
+      it('should fetch CSRF token successfully', async () => {
+        const mockToken = 'csrf-token-123'
+        const mockExpiresAt = new Date(Date.now() + 30 * 60 * 1000).toISOString()
+
+        mockFetch.mockResolvedValueOnce({
+          ok: true,
+          json: async () => ({
+            success: true,
+            data: {
+              csrfToken: mockToken,
+              expiresAt: mockExpiresAt,
+            },
+          }),
+        })
+
+        const token = await tokenManager.fetchCsrfToken()
+
+        expect(token).toBe(mockToken)
+        expect(tokenManager.getCsrfToken()).toBe(mockToken)
+        expect(mockFetch).toHaveBeenCalledWith('/api/csrf-token', {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          credentials: 'include',
+        })
+      })
+
+      it('should handle fetch errors', async () => {
+        mockFetch.mockResolvedValueOnce({
+          ok: false,
+          status: 500,
+        })
+
+        await expect(tokenManager.fetchCsrfToken()).rejects.toThrow(
+          'Failed to fetch CSRF token: 500'
+        )
+      })
+
+      it('should handle invalid response format', async () => {
+        mockFetch.mockResolvedValueOnce({
+          ok: true,
+          json: async () => ({
+            success: false,
+            data: null,
+          }),
+        })
+
+        await expect(tokenManager.fetchCsrfToken()).rejects.toThrow(
+          'Invalid CSRF token response'
+        )
+      })
+    })
+
+    describe('getValidCsrfToken', () => {
+      it('should return existing valid token', async () => {
+        const mockToken = 'csrf-token-123'
+        tokenManager.setCsrfToken(mockToken, Date.now() + 30 * 60 * 1000)
+
+        const token = await tokenManager.getValidCsrfToken()
+
+        expect(token).toBe(mockToken)
+        expect(mockFetch).not.toHaveBeenCalled()
+      })
+
+      it('should fetch new token when no token exists', async () => {
+        const mockToken = 'csrf-token-new'
+
+        mockFetch.mockResolvedValueOnce({
+          ok: true,
+          json: async () => ({
+            success: true,
+            data: {
+              csrfToken: mockToken,
+              expiresAt: new Date(Date.now() + 30 * 60 * 1000).toISOString(),
+            },
+          }),
+        })
+
+        const token = await tokenManager.getValidCsrfToken()
+
+        expect(token).toBe(mockToken)
+        expect(mockFetch).toHaveBeenCalled()
+      })
+
+      it('should fetch new token when current token is expired', async () => {
+        const expiredToken = 'csrf-token-expired'
+        const newToken = 'csrf-token-new'
+        
+        // Set expired token
+        tokenManager.setCsrfToken(expiredToken, Date.now() - 10000)
+
+        mockFetch.mockResolvedValueOnce({
+          ok: true,
+          json: async () => ({
+            success: true,
+            data: {
+              csrfToken: newToken,
+              expiresAt: new Date(Date.now() + 30 * 60 * 1000).toISOString(),
+            },
+          }),
+        })
+
+        const token = await tokenManager.getValidCsrfToken()
+
+        expect(token).toBe(newToken)
+        expect(mockFetch).toHaveBeenCalled()
+      })
     })
   })
 })

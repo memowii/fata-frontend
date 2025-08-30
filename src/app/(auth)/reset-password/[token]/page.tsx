@@ -1,9 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { resetPassword } from '@/lib/auth/client';
+import { CsrfProtectedForm } from '@/components/security/CsrfProtectedForm';
 import type { ResetPasswordDto } from '@/lib/types/auth.types';
 
 interface ResetPasswordPageProps {
@@ -89,6 +90,10 @@ export default function ResetPasswordPage({ params }: ResetPasswordPageProps) {
     }
   };
   
+  const handleCsrfError = useCallback((error: Error) => {
+    console.error('CSRF protection failed on reset password page:', error);
+  }, []);
+  
   if (success) {
     return (
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-8">
@@ -131,17 +136,24 @@ export default function ResetPasswordPage({ params }: ResetPasswordPageProps) {
   }
   
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-8">
-      <div className="mb-8 text-center">
-        <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
-          Set New Password
-        </h1>
-        <p className="text-gray-600 dark:text-gray-400">
-          Enter your new password below
-        </p>
-      </div>
-      
-      <form onSubmit={handleSubmit} className="space-y-6">
+    <CsrfProtectedForm
+      showCsrfLoading={false}
+      showCsrfError={false}
+      onCsrfError={handleCsrfError}
+      loadingMessage="Securing password reset form..."
+      errorMessage="Password reset security features are temporarily unavailable. Please refresh the page to continue."
+    >
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-8">
+        <div className="mb-8 text-center">
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
+            Set New Password
+          </h1>
+          <p className="text-gray-600 dark:text-gray-400">
+            Enter your new password below
+          </p>
+        </div>
+        
+        <form onSubmit={handleSubmit} className="space-y-6">
         {error && (
           <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 px-4 py-3 rounded-lg">
             {error}
@@ -215,14 +227,15 @@ export default function ResetPasswordPage({ params }: ResetPasswordPageProps) {
         </button>
       </form>
       
-      <div className="mt-6 text-center">
-        <Link
-          href="/login"
-          className="text-sm text-gray-600 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
-        >
-          ← Back to login
-        </Link>
+        <div className="mt-6 text-center">
+          <Link
+            href="/login"
+            className="text-sm text-gray-600 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
+          >
+            ← Back to login
+          </Link>
+        </div>
       </div>
-    </div>
+    </CsrfProtectedForm>
   );
 }

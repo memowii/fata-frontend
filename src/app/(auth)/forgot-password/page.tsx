@@ -3,6 +3,7 @@
 import { useCallback, useState } from 'react';
 import { forgotPassword } from '@/lib/auth/client';
 import { ForgotPasswordForm } from '@/components/auth/ForgotPasswordForm';
+import { CsrfProtectedForm } from '@/components/security/CsrfProtectedForm';
 import type { ForgotPasswordFormData } from '@/lib/types/validation.schemas';
 
 export default function ForgotPasswordPage() {
@@ -25,14 +26,26 @@ export default function ForgotPasswordPage() {
     }
   }, []);
   
+  const handleCsrfError = useCallback((error: Error) => {
+    console.error('CSRF protection failed on forgot password page:', error);
+  }, []);
+  
   return (
     <div className="w-full animate-fade-in">
-      <ForgotPasswordForm
-        onSubmit={handleForgotPassword}
-        showLoginLink
-        error={error || undefined}
-        isLoading={isLoading}
-      />
+      <CsrfProtectedForm
+        showCsrfLoading={false}
+        showCsrfError={false}
+        onCsrfError={handleCsrfError}
+        loadingMessage="Securing password reset form..."
+        errorMessage="Password reset security features are temporarily unavailable. Please refresh the page to continue."
+      >
+        <ForgotPasswordForm
+          onSubmit={handleForgotPassword}
+          showLoginLink
+          error={error || undefined}
+          isLoading={isLoading}
+        />
+      </CsrfProtectedForm>
     </div>
   );
 }
